@@ -1,0 +1,80 @@
+#container {
+    width: 800px;
+    height: 450px;
+    background-color: gray;
+ }
+
+ #topSection {
+     
+     width: 800px;
+     height: 50px;
+     background-color: brown;
+     text-align: right;
+    
+ }
+
+ #leftSection {
+    float: left;
+     width: 160px;
+     height: 400px;
+     background-color: red;
+     text-align: center;
+
+ }
+
+ #rightSection {
+    float: right;
+    width: 640px;
+    height: 400px;
+    background-color: blue;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+    font-family: Arial, sans-serif;
+ }
+
+ #student_id, #student_name {
+     font-size: 18px;
+     color: yellow;
+ }
+
+ #button1 {
+     width: 110px; /* 버튼 너비 */
+     height: 40px; /* 버튼 높이 */
+     background-color: lightgreen; /* 버튼 색상 */
+     color: black; /* 폰트 색상 */
+     font-size: 16px; /* 폰트 크기 */
+     font-family: Arial, sans-serif; /* 폰트 종류 */
+     margin-top: 10px;
+     text-align: center;
+ }
+
+ /* 두 번째 버튼 스타일 */
+ #button2 {
+     width: 110px; /* 버튼 너비 */
+     height: 40px; /* 버튼 높이 */
+     background-color: lightblue; /* 버튼 색상 */
+     color: black; /* 폰트 색상 */
+     font-size: 16px; /* 폰트 크기 */
+     font-family: Arial, sans-serif; /* 폰트 종류 */
+     margin-top: 10px;
+     text-align: center;
+ }
+
+ #image-wrapper {
+     display: flex;
+     align-items: flex-start; /* 사진과 목록을 위로 정렬 */
+     margin-right: 100px;
+ }
+
+ .description {
+     margin-left: 5px; /* 사진과 목록 사이 여백 조정 */
+ }
+
+ /* ul 태그 스타일 */
+ ul {
+     margin: 0; /* 목록의 기본 여백 제거 */
+     padding: 0; /* 목록의 패딩 제거 */
+ }

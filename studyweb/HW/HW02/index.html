@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Div를 16:9 비율로 상단에 배치하고 색상 배치하기 </title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div id="container">
+        <div id="topSection">
+            <span id="student_id">학번: 202127066</span>
+            <span id="student_name">이름: 유한상</span>
+        </div>
+        <div id="rightSection"> 
+            
+        </div>
+        <div id="leftSection"> <!-- UI 태그를 나타내는 div -->
+            <button id="button1" onclick="createCanvas()">버튼 1</button>
+            <button id="button2" onclick="addImage()">버튼 2</button>
+        </div>
+    </div>
+
+    <script>
+
+function createCanvas() {
+        var canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        var context = canvas.getContext('2d');
+        context.beginPath();
+        context.arc(100, 100, 50, 0, 2 * Math.PI);
+        context.fillStyle = 'green';
+        context.fill();
+        
+        document.getElementById('rightSection').innerHTML = '';
+        document.getElementById('rightSection').appendChild(canvas);
+    }
+
+    function addImage() {
+        var img = document.createElement('img');
+        img.src = 'Img/game.jpg'; 
+        img.alt = '이미지 설명'; 
+        img.width = 200; 
+        img.height = 250; 
+        img.style.marginRight = '100px'; 
+        img.style.marginBottom ='70px'; 
+           
+
+        var description = document.createElement('div');
+        description.classList.add('description');
+        description.innerHTML = `
+            
+            <div id="image-wrapper">
+                <img src="Img/game.jpg" alt="이미지 설명" width="200" height="250" style="margin-right: 70px; margin-bottom: 100px ">
+                <ul> 
+                    <li> 헌트 쇼다운 </li>
+                    <li> 2019.8.27</li>
+                    <li> 호러 fps</li>
+                    <li> 한방한방<br>묵직해서 좋습니다</li>
+                </ul>
+            </div>
+
+        `;
+
+        document.getElementById('rightSection').innerHTML = '';
+        document.getElementById('rightSection').appendChild(description);
+    }
+    
+
+</script>
+</body>
+</html>
