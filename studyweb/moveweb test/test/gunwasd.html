@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>이동하는 대상 쏘기</title>
+<style>
+  canvas {
+    background-color: #f0f0f0;
+  }
+  #restartButton {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    padding: 10px;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<button id="restartButton">다시 시작</button>
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let bullets = [];
+  const person = {
+    x: 100,
+    y: canvas.height / 2,
+    radius: 20
+  };
+
+  let target = {
+    x: canvas.width - 30,
+    y: 100,
+    radius: 20,
+    speed: 10
+  };
+
+  const keyState = {
+    w: false,
+    a: false,
+    s: false,
+    d: false
+  };
+
+  let gameActive = true;
+
+  document.addEventListener('keydown', function(event) {
+    keyState[event.key] = true;
+  });
+
+  document.addEventListener('keyup', function(event) {
+    keyState[event.key] = false;
+  });
+
+  const restartButton = document.getElementById('restartButton');
+  restartButton.addEventListener('click', function() {
+    gameRestart();
+  });
+
+  function handleMovement() {
+    const horizontalSpeed = keyState['a'] && keyState['d'] ? 0 : (keyState['a'] ? -target.speed : (keyState['d'] ? target.speed : 0));
+    const verticalSpeed = keyState['w'] && keyState['s'] ? 0 : (keyState['w'] ? -target.speed : (keyState['s'] ? target.speed : 0));
+
+    target.x += horizontalSpeed;
+    target.y += verticalSpeed;
+  }
+
+  function drawPerson(person) {
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(person.x, person.y, person.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(person.x - 10, person.y + person.radius, 20, 50);
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(person.x - 10, person.y + person.radius + 10);
+    ctx.lineTo(person.x - 30, person.y + person.radius + 30);
+    ctx.moveTo(person.x + 10, person.y + person.radius + 10);
+    ctx.lineTo(person.x + 30, person.y + person.radius + 30);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(person.x - 10, person.y + person.radius + 50);
+    ctx.lineTo(person.x - 20, person.y + person.radius + 80);
+    ctx.moveTo(person.x + 10, person.y + person.radius + 50);
+    ctx.lineTo(person.x + 20, person.y + person.radius + 80);
+    ctx.stroke();
+  }
+
+  function drawTarget() {
+    if (target) {
+      ctx.fillStyle = 'blue';
+      ctx.beginPath();
+      ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawBullets() {
+    bullets.forEach(bullet => {
+      ctx.save();
+      ctx.translate(bullet.x, bullet.y);
+      ctx.rotate(bullet.angle);
+      const caseLength = 20;
+      const caseHeight = 8;
+      const bulletTipLength = 15;
+      ctx.fillStyle = '#b5b5b5';
+      ctx.fillRect(0, -caseHeight / 2, caseLength, caseHeight);
+      ctx.fillStyle = '#606060';
+      ctx.beginPath();
+      ctx.moveTo(caseLength, -caseHeight / 2);
+      ctx.lineTo(caseLength + bulletTipLength, 0);
+      ctx.lineTo(caseLength, caseHeight / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function updateBullets() {
+    bullets.forEach(bullet => {
+      bullet.x += bullet.velocityX;
+      bullet.y += bullet.velocityY;
+      bullet.angle += 0.1;
+
+      if (target) {
+        const dx = bullet.x - target.x;
+        const dy = bullet.y - target.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < bullet.radius + target.radius) {
+          target = null; // 타겟이 총알에 맞았을 때 제거
+          gameOver();
+        }
+      }
+
+      bullets = bullets.filter(b => b.x >= 0 && b.x <= canvas.width && b.y >= 0 && b.y <= canvas.height);
+    });
+  }
+
+  function launchBullets() {
+    if (!gameActive) return;
+    for (let i = 0; i < 100; i++) {
+      const angle = Math.random() * Math.PI * 2; // 0에서 2π 사이의 무작위 각도
+      const velocityX = Math.cos(angle) * 10;
+      const velocityY = Math.sin(angle) * 10;
+      bullets.push({
+        x: person.x,
+        y: person.y,
+        velocityX: velocityX,
+        velocityY: velocityY,
+        radius: 5,
+        angle: angle
+      });
+    }
+  }
+
+  function gameLoop() {
+    if (!gameActive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPerson(person);
+    drawTarget();
+    drawBullets();
+    updateBullets();
+    handleMovement();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function gameOver() {
+    gameActive = false;
+    restartButton.style.display = 'block';
+  }
+
+  function gameRestart() {
+    gameActive = true;
+    restartButton.style.display = 'none';
+    target = {
+      x: canvas.width - 30,
+      y: 100,
+      radius: 20,
+      speed: 10
+    };
+    bullets = [];
+    gameLoop();
+  }
+
+  setInterval(launchBullets, 2000); // 2초마다 총알 발사
+  gameLoop();
+</script>
+</body>
+</html>

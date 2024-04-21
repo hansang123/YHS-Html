@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dino Game</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        canvas {
+            background-color: #fff;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="1000" height="300"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let dino = {
+            x: 50,
+            y: 230,
+            width: 50,
+            height: 50,
+            jumping: false,
+            velocity: 0,
+            gravity: 0.6
+        };
+
+        let obstacle = {
+            x: canvas.width,
+            y: 260,
+            width: 40,
+            height: 40,
+            speed: 4,
+            maxSpeed: 30  // 최대 속도를 더 높게 설정
+        };
+
+        function drawDino() {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+        }
+
+        function drawObstacle() {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.moveTo(obstacle.x, obstacle.y + obstacle.height);
+            ctx.lineTo(obstacle.x + obstacle.width / 2, obstacle.y); 
+            ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height); 
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function updateGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawDino();
+            drawObstacle();
+
+            if (dino.jumping) {
+                dino.velocity += dino.gravity;
+                dino.y += dino.velocity;
+                if (dino.y > 230) {
+                    dino.jumping = false;
+                    dino.y = 230;
+                    dino.velocity = 0;
+                }
+            }
+
+            obstacle.x -= obstacle.speed;
+            if (obstacle.x + obstacle.width < 0) {
+                obstacle.x = canvas.width;
+            }
+
+            if (dino.x < obstacle.x + obstacle.width &&
+                dino.x + dino.width > obstacle.x &&
+                dino.y < obstacle.y + obstacle.height &&
+                dino.y + dino.height > obstacle.y) {
+                alert("Game Over!");
+                obstacle.x = canvas.width;
+                clearInterval(increaseSpeedInterval);
+            }
+
+            requestAnimationFrame(updateGame);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === ' ' && !dino.jumping) {
+                dino.jumping = true;
+                dino.velocity = -10;
+            }
+        });
+
+        let increaseSpeedInterval = setInterval(function() {
+            if (obstacle.speed < obstacle.maxSpeed) {
+                obstacle.speed += 1;  // 속도를 더 큰 단위로 증가
+            }
+        }, 1000);  // 증가 주기를 1초로 단축
+
+        updateGame();
+    </script>
+</body>
+</html>

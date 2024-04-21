@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simple Flappy Bird Game</title>
+<style>
+  canvas {
+    display: block;
+    background-color: #70c5ce;
+    margin: auto;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1920;
+  canvas.height = 1080;
+
+  let bird = {
+    x: 50,
+    y: 320,
+    size: 20,
+    gravity: 0.4,
+    lift: -10,
+    velocity: 0
+  };
+
+  let obstacles = [];
+  let interval = 0;
+  let score = 0;
+  let gameRunning = false;
+  const gap = 300; // 장애물 사이의 간격
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === " ") {
+      bird.velocity = bird.lift;
+    }
+  });
+
+  function drawBird() {
+    ctx.fillStyle = 'yellow';
+    ctx.beginPath();
+    ctx.arc(bird.x, bird.y, bird.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function updateBird() {
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+    if (bird.y + bird.size > canvas.height || bird.y - bird.size < 0) {
+      gameOver();
+    }
+  }
+
+  function drawObstacles() {
+    obstacles.forEach((obs) => {
+      ctx.fillStyle = 'green';
+      ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      ctx.fillRect(obs.x, obs.y + obs.height + gap, obs.width, canvas.height - obs.y - obs.height - gap);
+    });
+  }
+
+  function updateObstacles() {
+    if (interval % 150 === 0) {
+      let obstacleHeight = Math.random() * (canvas.height - 300) + 50;
+      obstacles.push({x: canvas.width, y: 0, width: 20, height: obstacleHeight});
+    }
+    obstacles = obstacles.map(obs => ({...obs, x: obs.x - 2}));
+    obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+  }
+
+  function checkCollision() {
+    obstacles.forEach((obs) => {
+      // Top pipe collision
+      if (bird.x + bird.size >= obs.x && bird.x - bird.size <= obs.x + obs.width &&
+          bird.y - bird.size <= obs.y + obs.height) {
+        gameOver();
+      }
+      // Bottom pipe collision
+      if (bird.x + bird.size >= obs.x && bird.x - bird.size <= obs.x + obs.width &&
+          bird.y + bird.size >= obs.y + obs.height + gap) {
+        gameOver();
+      }
+    });
+    // Ground and ceiling collision
+    if (bird.y + bird.size >= canvas.height || bird.y - bird.size <= 0) {
+      gameOver();
+    }
+  }
+
+  function gameOver() {
+    gameRunning = false;
+    alert(`Game Over! Your score: ${score}`);
+    document.location.reload();
+  }
+
+  function gameLoop() {
+    interval++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBird();
+    updateBird();
+    drawObstacles();
+    updateObstacles();
+    checkCollision();
+    if (gameRunning) {
+      score++;
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function startGame() {
+    if (!gameRunning) {
+      gameRunning = true;
+      obstacles = [];
+      score = 0;
+      bird.y = 320;
+      bird.velocity = 0;
+      interval = 0;
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  canvas.addEventListener('click', startGame);
+</script>
+</body>
+</html>

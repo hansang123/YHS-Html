@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>이동하는 대상 쏘기</title>
+<style>
+  canvas {
+    background-color: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let bullets = [];
+  const person = {
+    x: 100,
+    y: canvas.height / 2,
+    radius: 20 // 머리의 반지름으로 사용됩니다.
+  };
+
+  let target = {
+    x: canvas.width - 30,
+    y: 100,
+    radius: 20,
+    speed: 2,
+    movingDown: true
+  };
+
+  function drawPerson(person) {
+    // 머리
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(person.x, person.y, person.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 몸통
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(person.x - 10, person.y + person.radius, 20, 50);
+
+    // 팔
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(person.x - 10, person.y + person.radius + 10);
+    ctx.lineTo(person.x - 30, person.y + person.radius + 30);
+    ctx.moveTo(person.x + 10, person.y + person.radius + 10);
+    ctx.lineTo(person.x + 30, person.y + person.radius + 30);
+    ctx.stroke();
+
+    // 다리
+    ctx.beginPath();
+    ctx.moveTo(person.x - 10, person.y + person.radius + 50);
+    ctx.lineTo(person.x - 20, person.y + person.radius + 80);
+    ctx.moveTo(person.x + 10, person.y + person.radius + 50);
+    ctx.lineTo(person.x + 20, person.y + person.radius + 80);
+    ctx.stroke();
+  }
+
+  function drawTarget() {
+    ctx.fillStyle = 'blue';
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawBullets() {
+    bullets.forEach(bullet => {
+      ctx.save(); // 현재 상태를 저장
+      ctx.translate(bullet.x, bullet.y); // 총알의 위치로 이동
+      ctx.rotate(bullet.angle); // 총알의 각도로 회전
+
+      const caseLength = 20; // 총알 케이스 길이
+      const caseHeight = 8; // 총알 케이스 높이
+      const bulletTipLength = 15; // 탄환 끝 부분 길이
+
+      ctx.fillStyle = '#b5b5b5'; // 금속 케이스 색
+      ctx.fillRect(0, -caseHeight / 2, caseLength, caseHeight);
+
+      ctx.fillStyle = '#606060'; // 탄환 색
+      ctx.beginPath();
+      ctx.moveTo(caseLength, -caseHeight / 2);
+      ctx.lineTo(caseLength + bulletTipLength, 0);
+      ctx.lineTo(caseLength, caseHeight / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore(); // 저장된 상태로 복원
+    });
+  }
+
+  function updateTarget() {
+    if (target.movingDown) {
+      target.y += target.speed;
+      if (target.y + target.radius >= canvas.height) {
+        target.movingDown = false;
+      }
+    } else {
+      target.y -= target.speed;
+      if (target.y - target.radius <= 0) {
+        target.movingDown = true;
+      }
+    }
+  }
+
+  function updateBullets() {
+    bullets.forEach(bullet => {
+      bullet.x += bullet.velocityX;
+      bullet.y += bullet.velocityY;
+      bullet.angle += 0.1; // 총알의 회전 속도
+
+      // Check collision
+      const dx = bullet.x - target.x;
+      const dy = bullet.y - target.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < bullet.radius + target.radius) {
+        target = null; // Remove the target if hit
+      }
+
+      // Remove bullets that are out of bounds
+      if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+        bullets = bullets.filter(b => b !== bullet);
+      }
+    });
+  }
+
+  function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPerson(person);
+    if (target) {
+      drawTarget();
+      updateTarget();
+    }
+    drawBullets();
+    updateBullets();
+    requestAnimationFrame(gameLoop);
+  }
+
+  canvas.addEventListener('click', function(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const dx = x - person.x;
+    const dy = y - person.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const velocityX = (dx / distance) * 10;
+    const velocityY = (dy / distance) * 10;
+
+    bullets.push({
+      x: person.x,
+      y: person.y,
+      velocityX: velocityX,
+      velocityY: velocityY,
+      radius: 5,
+      angle: 0 // 초기 회전 각도
+    });
+  });
+
+  gameLoop();
+</script>
+</body>
+</html>

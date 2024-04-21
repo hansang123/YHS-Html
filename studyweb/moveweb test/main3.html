@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AABB 충돌 감지 및 겹치는 영역 색칠 예제</title>
+<style>
+  canvas {
+    background-color: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 400;
+  canvas.height = 400;
+
+  let rect1 = { x: 50, y: 50, width: 100, height: 100 };
+  let rect2 = { x: 100, y: 100, width: 150, height: 150 };
+
+  function drawRect(rect, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+  }
+
+  function calculateOverlap(A, B) {
+    const x = Math.max(A.x, B.x);
+    const y = Math.max(A.y, B.y);
+    const width = Math.min(A.x + A.width, B.x + B.width) - x;
+    const height = Math.min(A.y + A.height, B.y + B.height) - y;
+    return { x, y, width, height };
+  }
+
+  function checkCollision(A, B) {
+    return (A.x < B.x + B.width &&
+            A.x + A.width > B.x &&
+            A.y < B.y + B.height &&
+            A.y + A.height > B.y);
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRect(rect1, 'red');
+    drawRect(rect2, 'blue');
+
+    if (checkCollision(rect1, rect2)) {
+      const overlap = calculateOverlap(rect1, rect2);
+      drawRect(overlap, 'green'); // 겹치는 영역을 녹색으로 그림
+      console.log('충돌 발생!');
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>

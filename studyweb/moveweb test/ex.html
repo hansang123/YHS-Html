@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Canvas Interactive Demo</title>
+<style>
+  canvas { background: #f0f0f0; }
+</style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 800;
+  canvas.height = 600;
+
+  let box = { x: 100, y: 100, width: 100, height: 100, dx: 2, dy: 2 };
+  let angle = 0;
+  let fillColor = 'blue'; // 기본 색상은 파란색
+
+  function drawBox() {
+    ctx.save();
+    ctx.translate(box.x + box.width / 2, box.y + box.height / 2);
+    ctx.rotate(angle);
+    ctx.scale(1, 1);
+    ctx.fillStyle = fillColor; // 사용할 색상
+    ctx.fillRect(-box.width / 2, -box.height / 2, box.width, box.height);
+    ctx.restore();
+  }
+
+  function update() {
+    box.x += box.dx;
+    box.y += box.dy;
+    if (box.x + box.width > canvas.width || box.x < 0) {
+      box.dx *= -1;
+    }
+    if (box.y + box.height > canvas.height || box.y < 0) {
+      box.dy *= -1;
+    }
+    angle += 0.01;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBox();
+    update();
+    requestAnimationFrame(render);
+  }
+
+  canvas.addEventListener('mousemove', function(e) {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    if (mouseX > box.x && mouseX < box.x + box.width && mouseY > box.y && mouseY < box.y + box.height) {
+      fillColor = 'red'; // 마우스가 상자 위에 있을 때 빨간색으로 변경
+    } else {
+      fillColor = 'blue'; // 그렇지 않으면 파란색으로 유지
+    }
+    drawBox(); // 즉각적으로 화면에 반영
+  });
+
+  window.addEventListener('keydown', function(e) {
+    switch (e.key) {
+      case 'ArrowUp': box.dy -= 1; break;
+      case 'ArrowDown': box.dy += 1; break;
+      case 'ArrowLeft': box.dx -= 1; break;
+      case 'ArrowRight': box.dx += 1; break;
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>

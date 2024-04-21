@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>원의 겹치는 영역 시각화</title>
+<style>
+  canvas {
+    border: 1px solid black;
+  }
+</style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1920;
+  canvas.height = 1080;
+
+  let circle1 = { x: 80, y: 200, radius: 80, targetX: 1840 - 80 };
+  let circle2 = { x: 1840, y: 200, radius: 100, targetX: 80 };
+
+  function drawCircle(circle, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function updatePosition(circle) {
+    // 원의 위치를 점진적으로 이동시킵니다.
+    const moveSpeed = 2;  // 한 프레임당 이동 속도
+    if (Math.abs(circle.targetX - circle.x) > moveSpeed) {
+      circle.x += (circle.targetX > circle.x) ? moveSpeed : -moveSpeed;
+    } else {
+      circle.x = circle.targetX;
+    }
+  }
+
+  function drawIntersectionArea(c1, c2) {
+    const dx = c2.x - c1.x;
+    const dy = c2.y - c1.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < c1.radius + c2.radius) {
+      const a = (c1.radius * c1.radius - c2.radius * c2.radius + dist * dist) / (2 * dist);
+      const h = Math.sqrt(c1.radius * c1.radius - a * a);
+      const px = c1.x + a * (c2.x - c1.x) / dist;
+      const py = c1.y + a * (c2.y - c1.y) / dist;
+
+      const angle1 = Math.acos(a / c1.radius);
+      const angle2 = Math.acos((dist - a) / c2.radius);
+
+      ctx.beginPath();
+      ctx.arc(c1.x, c1.y, c1.radius, Math.atan2(py - c1.y, px - c1.x) - angle1, Math.atan2(py - c1.y, px - c1.x) + angle1);
+      ctx.arc(c2.x, c2.y, c2.radius, Math.atan2(py - c2.y, px - c2.x) + angle2, Math.atan2(py - c2.y, px - c2.x) - angle2, true);
+      ctx.closePath();
+      ctx.fillStyle = 'green';
+      ctx.fill();
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updatePosition(circle1);
+    updatePosition(circle2);
+    drawCircle(circle1, 'red');
+    drawCircle(circle2, 'blue');
+    drawIntersectionArea(circle1, circle2);
+    if (circle1.x !== circle1.targetX || circle2.x !== circle2.targetX) {
+      requestAnimationFrame(render);
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>

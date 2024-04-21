@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>원의 겹치는 영역 시각화</title>
+<style>
+  
+</style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 400;
+  canvas.height = 400;
+
+  const circle1 = { x: 150, y: 200, radius: 80 };
+  const circle2 = { x: 250, y: 200, radius: 100 };
+
+  function drawCircle(circle, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawIntersectionArea(c1, c2) {
+    const dx = c2.x - c1.x;
+    const dy = c2.y - c1.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < c1.radius + c2.radius) {
+      const a = (c1.radius * c1.radius - c2.radius * c2.radius + dist * dist) / (2 * dist);
+      const h = Math.sqrt(c1.radius * c1.radius - a * a);
+      const px = c1.x + a * (c2.x - c1.x) / dist;
+      const py = c1.y + a * (c2.y - c1.y) / dist;
+
+      const angle1 = Math.acos(a / c1.radius);
+      const angle2 = Math.acos((dist - a) / c2.radius);
+
+      ctx.beginPath();
+      ctx.arc(c1.x, c1.y, c1.radius, Math.atan2(py - c1.y, px - c1.x) - angle1, Math.atan2(py - c1.y, px - c1.x) + angle1);
+      ctx.arc(c2.x, c2.y, c2.radius, Math.atan2(py - c2.y, px - c2.x) + angle2, Math.atan2(py - c2.y, px - c2.x) - angle2, true);
+      ctx.closePath();
+      ctx.fillStyle = 'green';
+      ctx.fill();
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawCircle(circle1, 'red');
+    drawCircle(circle2, 'blue');
+    drawIntersectionArea(circle1, circle2);
+  }
+
+  render();
+</script>
+</body>
+</html>
