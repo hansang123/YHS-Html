@@ -23,6 +23,21 @@ body, html {
   border: 1px solid black;
 }
 
+#gameOverCanvas {
+  background-color: rgb(255, 0, 0); /* 배경색을 빨간색으로 변경 */
+  width: 600px;
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-family: Arial, sans-serif;
+  margin: 50px 0;
+  border: 1px solid black;
+  display: none;
+}
+
 #gameCanvas {
   background-color: rgb(180, 180, 180);
   width: 600px;
@@ -32,7 +47,7 @@ body, html {
 }
 
 button {
-  background-color: black;
+  background-color: gray; /* 기본 색상을 회색으로 설정 */
   color: white;
   padding: 10px 20px;
   font-size: 16px;
@@ -42,5 +57,9 @@ button {
 }
 
 button:hover {
-  background-color: blue;
+  background-color: peachpuff; /* 마우스를 올리면 살색으로 변경 */
+}
+
+button:active {
+  background-color: navy; /* 버튼을 누르면 남색으로 변경 */
 }
