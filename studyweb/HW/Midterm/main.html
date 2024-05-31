@@ -18,10 +18,14 @@
     </div>
     <canvas id="gameCanvas" width="600" height="800"></canvas>
     <script>
-        let starX, starY;
-        const starSpeed = 5;
-        let starDirection = { up: false, down: false, left: false, right: false };
+        let starX, starY, heartX, heartY;
+        const heartSpeed = 5;
+        let heartDirection = { up: false, down: false, left: false, right: false };
         let heartHP = 3; // 하트의 HP
+        let starCollected = false; // 별을 먹었는지 여부
+        let isAttacking = false; // 공격 중인지 여부
+        let attackFrame = 0; // 공격 애니메이션 프레임
+        let enemiesRemoved = 0; // 제거된 적의 갯수
 
         // Circle Collider를 사용하여 두 원의 충돌을 감지합니다.
         function circleCollider(x1, y1, radius1, x2, y2, radius2) {
@@ -31,8 +35,29 @@
             return distance < radius1 + radius2; // 두 원의 반지름 합이 두 점 사이의 거리보다 작으면 충돌이 발생합니다.
         }
 
-        function getRandomPosition(max) {
-            return Math.random() * max;
+        function getRandomPositionOutsideCanvas(canvasWidth, canvasHeight) {
+            let x, y;
+            const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+            const offset = 20;
+            switch (edge) {
+                case 0: // top
+                    x = Math.random() * canvasWidth;
+                    y = -offset;
+                    break;
+                case 1: // right
+                    x = canvasWidth + offset;
+                    y = Math.random() * canvasHeight;
+                    break;
+                case 2: // bottom
+                    x = Math.random() * canvasWidth;
+                    y = canvasHeight + offset;
+                    break;
+                case 3: // left
+                    x = -offset;
+                    y = Math.random() * canvasHeight;
+                    break;
+            }
+            return { x, y };
         }
 
         function startGame() {
@@ -41,19 +66,24 @@
             document.getElementById("gameCanvas").style.display = "block"; // 게임 캔버스 표시
 
             heartHP = 3; // 하트의 HP 초기화
+            starCollected = false; // 별 수집 여부 초기화
+            isAttacking = false; // 공격 중 여부 초기화
+            attackFrame = 0; // 공격 애니메이션 프레임 초기화
+            enemiesRemoved = 0; // 제거된 적의 갯수 초기화
 
             const canvas = document.getElementById("gameCanvas");
             const ctx = canvas.getContext("2d");
             const enemies = [];
 
-            const heartX = canvas.width / 2;
-            const heartY = canvas.height / 2;
+            heartX = canvas.width / 2;
+            heartY = canvas.height / 2;
             const heartSize = 20;
             let heartRotation = 0; // 하트 회전 각도
             const rotationSpeed = 0.05; // 하트 회전 속도
 
-            starX = getRandomPosition(canvas.width);
-            starY = getRandomPosition(canvas.height);
+            let position = getRandomPositionOutsideCanvas(canvas.width, canvas.height);
+            starX = position.x;
+            starY = position.y;
 
             function randomColor() {
                 return `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
@@ -63,19 +93,10 @@
                 const count = 5 + Math.floor(Math.random() * 11); // 5~15개의 적 생성
                 for (let i = 0; i < count; i++) {
                     const size = 10 + Math.random() * 20;
-                    const speed = 0.5 + Math.random();
-                    let x, y;
+                    const speed = 0.1 + Math.random();
+                    let position = getRandomPositionOutsideCanvas(canvas.width, canvas.height);
 
-                    // 적이 캔버스 바깥에서 생성되도록 위치 설정
-                    if (Math.random() < 0.5) {
-                        x = Math.random() < 0.5 ? -20 : canvas.width + 20; // 좌우 바깥쪽
-                        y = Math.random() * canvas.height;
-                    } else {
-                        y = Math.random() < 0.5 ? -20 : canvas.height + 20; // 상하 바깥쪽
-                        x = Math.random() * canvas.width;
-                    }
-
-                    enemies.push({ x, y, size, speed, color: randomColor() });
+                    enemies.push({ x: position.x, y: position.y, size, speed, color: randomColor() });
                 }
             }
 
@@ -137,39 +158,95 @@
                 ctx.restore();
             }
 
-            function updateStarPosition() {
-                if (starDirection.up) starY -= starSpeed;
-                if (starDirection.down) starY += starSpeed;
-                if (starDirection.left) starX -= starSpeed;
-                if (starDirection.right) starX += starSpeed;
+            function updateHeartPosition() {
+                const dx = (heartDirection.left ? -heartSpeed : 0) + (heartDirection.right ? heartSpeed : 0);
+                const dy = (heartDirection.up ? -heartSpeed : 0) + (heartDirection.down ? heartSpeed : 0);
 
-                // 적들과 배경이 반대 방향으로 이동
-                for (let enemy of enemies) {
-                    if (starDirection.up) enemy.y += starSpeed;
-                    if (starDirection.down) enemy.y -= starSpeed;
-                    if (starDirection.left) enemy.x += starSpeed;
-                    if (starDirection.right) enemy.x -= starSpeed;
+                if (dx !== 0 || dy !== 0) {
+                    for (const enemy of enemies) {
+                        enemy.x -= dx;
+                        enemy.y -= dy;
+                    }
+
+                    starX -= dx;
+                    starY -= dy;
                 }
             }
 
-            function moveStar(e) {
+            function moveHeart(e) {
                 switch (e.key) {
                     case 'ArrowUp':
-                        starDirection.up = e.type === 'keydown';
+                        heartDirection.up = true;
                         break;
                     case 'ArrowDown':
-                        starDirection.down = e.type === 'keydown';
+                        heartDirection.down = true;
                         break;
                     case 'ArrowLeft':
-                        starDirection.left = e.type === 'keydown';
+                        heartDirection.left = true;
                         break;
                     case 'ArrowRight':
-                        starDirection.right = e.type === 'keydown';
+                        heartDirection.right = true;
                         break;
-                    case 'F5': // F5키를 누를 때 별의 위치를 무작위로 변경
-                        starX = getRandomPosition(canvas.width);
-                        starY = getRandomPosition(canvas.height);
+                }
+            }
+
+            function moveHeartStop(e) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        heartDirection.up = false;
                         break;
+                    case 'ArrowDown':
+                        heartDirection.down = false;
+                        break;
+                    case 'ArrowLeft':
+                        heartDirection.left = false;
+                        break;
+                    case 'ArrowRight':
+                        heartDirection.right = false;
+                        break;
+                }
+            }
+
+            function drawHeartAttack() {
+                let scale;
+                if (attackFrame <= 50) { // 커지는 단계
+                    scale = 1 + attackFrame / 10;
+                } else { // 작아지는 단계
+                    scale = 6 - (attackFrame - 50) / 10;
+                }
+                ctx.save();
+                ctx.translate(heartX, heartY);
+                ctx.scale(scale, scale); // 하트 모양을 프레임에 따라 확장 및 축소합니다.
+                ctx.translate(-heartX, -heartY);
+                ctx.strokeStyle = "pink"; // 핑크색 외곽선
+                ctx.lineWidth = 3; // 외곽선 두께
+                ctx.beginPath();
+                for (var i = 0; i <= 360; i++) {
+                    var radian = i * Math.PI / 180;
+                    var xCoord = 16 * Math.pow(Math.sin(radian), 3);
+                    var yCoord = 13 * Math.cos(radian) - 5 * Math.cos(2 * radian) - 2 * Math.cos(3 * radian) - Math.cos(4 * radian);
+                    ctx.lineTo(heartX + xCoord * 2, heartY - yCoord * 2);
+                }
+                ctx.closePath();
+                ctx.stroke(); // 외곽선 그리기
+                ctx.restore();
+
+                // 공격이 적들에게 닿으면 적을 제거합니다.
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    if (circleCollider(heartX, heartY, heartSize * scale, enemy.x, enemy.y, enemy.size)) {
+                        enemies.splice(i, 1);
+                        enemiesRemoved++; // 적 제거 시 갯수 증가
+                    }
+                }
+                attackFrame++;
+                if (attackFrame > 100) { // 공격 애니메이션이 끝나면
+                    isAttacking = false;
+                    attackFrame = 0;
+                    starCollected = false; // 공격 후 다시 별을 먹어야 공격 가능
+                    let position = getRandomPositionOutsideCanvas(canvas.width, canvas.height); // 별을 새로운 위치에 생성
+                    starX = position.x;
+                    starY = position.y;
                 }
             }
 
@@ -177,14 +254,26 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 heartRotation += rotationSpeed; // 회전 각도를 증가
                 drawHeart();
-                updateStarPosition();
-                drawStar(starX, starY);
+                updateHeartPosition();
+                if (!starCollected) drawStar(starX, starY); // 별을 먹지 않았다면 별을 그립니다.
                 drawEnemies();
+
+                if (isAttacking) drawHeartAttack(); // 공격 중일 때 공격을 그립니다.
 
                 // HP 표시
                 ctx.fillStyle = "white";
                 ctx.font = "24px Arial";
                 ctx.fillText("Heart HP: " + heartHP, 20, 40);
+
+                // 제거된 적의 갯수 표시
+                ctx.fillStyle = "white";
+                ctx.font = "24px Arial";
+                ctx.fillText("Enemies Removed: " + enemiesRemoved, canvas.width - 240, 40);
+
+                // 별과 하트의 충돌을 감지하여 별을 먹었는지 확인합니다.
+                if (!starCollected && circleCollider(heartX, heartY, heartSize, starX, starY, 15)) {
+                    starCollected = true;
+                }
 
                 // 게임 오버 검사
                 if (heartHP <= 0) {
@@ -200,8 +289,14 @@
                 document.getElementById("gameOverCanvas").style.display = "flex"; // 게임 오버 화면 표시
             }
 
-            window.addEventListener('keydown', moveStar);
-            window.addEventListener('keyup', moveStar);
+            window.addEventListener('keydown', moveHeart);
+            window.addEventListener('keyup', moveHeartStop);
+            window.addEventListener('click', () => {
+                if (starCollected && !isAttacking) {
+                    isAttacking = true;
+                    attackFrame = 1;
+                }
+            });
 
             spawnEnemies();
             setInterval(spawnEnemies, 1000); // 초당 5~15개의 적 생성
