@@ -25,25 +25,41 @@ function drawTriangle() {
     requestAnimationFrame(drawTriangle);
 }
 
-function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
-    const v0x = cx - ax;
-    const v0y = cy - ay;
-    const v1x = bx - ax;
-    const v1y = by - ay;
-    const v2x = px - ax;
-    const v2y = py - ay;
+function getLineEquation(x1, y1, x2, y2) {
+    const m = (y2 - y1) / (x2 - x1);
+    const b = y1 - m * x1;
+    return { m, b };
+}
 
-    const dot00 = v0x * v0x + v0y * v0y;
-    const dot01 = v0x * v1x + v0y * v1y;
-    const dot02 = v0x * v2x + v0y * v2y;
-    const dot11 = v1x * v1x + v1y * v1y;
-    const dot12 = v1x * v2x + v1y * v2y;
+function isPointAboveLine(px, py, line) {
+    return py < line.m * px + line.b;
+}
 
-    const invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+function isPointBelowLine(px, py, line) {
+    return py > line.m * px + line.b;
+}
 
-    return (u >= 0) && (v >= 0) && (u + v < 1);
+function rotatePoint(x, y, angle, centerX, centerY) {
+    const rad = angle * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const nx = cos * (x - centerX) - sin * (y - centerY) + centerX;
+    const ny = sin * (x - centerX) + cos * (y - centerY) + centerY;
+    return { x: nx, y: ny };
+}
+
+function isPointInTriangle(px, py, points) {
+    const [p1, p2, p3] = points;
+
+    const line1 = getLineEquation(p1.x, p1.y, p2.x, p2.y);
+    const line2 = getLineEquation(p2.x, p2.y, p3.x, p3.y);
+    const line3 = getLineEquation(p3.x, p3.y, p1.x, p1.y);
+
+    const isBelowLine1 = isPointBelowLine(px, py, line1);
+    const isAboveLine2 = isPointAboveLine(px, py, line2);
+    const isBelowLine3 = isPointBelowLine(px, py, line3);
+
+    return isBelowLine1 && isAboveLine2 && isBelowLine3;
 }
 
 canvas.addEventListener('click', (event) => {
@@ -55,11 +71,8 @@ canvas.addEventListener('click', (event) => {
     const centerY = canvas.height / 2;
     const size = 100;
 
-    // 클릭한 좌표를 삼각형의 로컬 좌표로 변환
-    const cos = Math.cos(angle * Math.PI / 180);
-    const sin = Math.sin(angle * Math.PI / 180);
-    const localX = cos * (x - centerX) + sin * (y - centerY);
-    const localY = -sin * (x - centerX) + cos * (y - centerY);
+    // 클릭한 좌표를 원래 좌표계로 변환
+    const transformedPoint = rotatePoint(x, y, -angle, centerX, centerY);
 
     const points = [
         { x: 0, y: -size / 2 },
@@ -67,12 +80,7 @@ canvas.addEventListener('click', (event) => {
         { x: -size / 2, y: size / 2 }
     ];
 
-    const inside = pointInTriangle(localX, localY,
-        points[0].x, points[0].y,
-        points[1].x, points[1].y,
-        points[2].x, points[2].y);
-
-    if (inside) {
+    if (isPointInTriangle(transformedPoint.x - centerX, transformedPoint.y - centerY, points)) {
         triangleColor = triangleColor === 'blue' ? 'red' : 'blue';
     }
 });
